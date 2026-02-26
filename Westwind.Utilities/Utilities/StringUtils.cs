@@ -1517,6 +1517,9 @@ namespace Westwind.Utilities
         /// <returns>Base 64 or null</returns>
         public static string ToBase64String(string text, Encoding encoding = null)
         {
+            if (encoding == null)
+                encoding = Encoding.UTF8;
+
             var bytes = StringToBytes(text, encoding);
             if (bytes == null)
                 return null;
@@ -1532,6 +1535,9 @@ namespace Westwind.Utilities
         /// <returns></returns>
         public static string FromBase64String(string base64, Encoding encoding = null)
         {
+            if (encoding == null)
+                encoding = Encoding.UTF8;
+
             var bytes = Convert.FromBase64String(base64);
             if (bytes == null)
                 return null;

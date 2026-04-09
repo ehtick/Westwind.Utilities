@@ -110,6 +110,32 @@ namespace Westwind.Utilities
             return (long)BitConverter.ToUInt64(bytes, 0);
         }
 
+
+        ///<summary>
+        /// Generates a unique numeric ID that only contains numbers 
+        /// as a string. Generated off a GUID and
+        /// returned as a 64 bit number string value that returns the last
+        /// numbers of the Guid as specified by the size parameter.
+        /// 
+        /// Useful for creating one-time validation codes that are easy to
+        /// copy and type. 
+        /// 
+        /// For highly unique value ids `GenerateUniqueId()` is a better choice 
+        /// due to data density of alpha-numeric strings.
+        /// </summary>
+        /// <param name="size">Number of characters to return. Minimum is 4, Max is 19.</param>
+        /// <returns>numeric string id</returns>
+        public static string GenerateUniqueNumericIdAsString(int size = 6)
+        {            
+            var val = GenerateUniqueNumericId().ToString();
+
+            if (size < 4) size = 4;
+            else if (size > 19) size = 19;
+
+            return val.GetLastCharacters(size);
+        }
+
+
         private static Random rnd = new Random();
 
         /// <summary>

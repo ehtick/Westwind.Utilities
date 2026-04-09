@@ -3,6 +3,13 @@
 
 ## 5.3
 
+* **Westwind.Data - Using System.Data.Sql 7.0**
+Westwind.Data switched over to System.Data.SqlClient 7.0 which **removes the Azure Authentication dependencies** in this assembly. This reduces footprint if you don't need it, but if you do requires adding the `Microsoft.Data.SqlClient.Extensions.Azure` package.   
+*This is a potentially breaking change that may require adding the extra NuGet package*{style='color: red'}
+
+* **DataUtils.GenerateUniqueNumericIdString()**  
+Added a support function for GenerateNumericId that returns a string that is scope to a specified number of characters. This is useful for one-time validation code generation that need temporary ids that are easy to read and copy either manually or via copying.
+
 * **HttpClientUtils.DownloadBytes/Async**  
 Added routine to easily download bytes from an Http server.
 

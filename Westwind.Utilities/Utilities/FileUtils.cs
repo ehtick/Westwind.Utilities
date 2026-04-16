@@ -2,7 +2,7 @@
 /*
  **************************************************************
  *  Author: Rick Strahl 
- *          © West Wind Technologies, 2009
+ *          Â© West Wind Technologies, 2009
  *          http://www.west-wind.com/
  * 
  * Created: 09/12/2009
@@ -449,6 +449,8 @@ namespace Westwind.Utilities
         /// <returns></returns>
         public static string AddTrailingSlash(string path)
         {
+            if (string.IsNullOrEmpty(path)) return path;
+
             string separator = Path.DirectorySeparatorChar.ToString();
 
             path = path.TrimEnd();

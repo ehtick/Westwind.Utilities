@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -1286,14 +1286,15 @@ public static TResult DownloadJson<TResult>(string url, string verb = "GET", obj
                 settings.RequestContent = settings.GetPostBufferBytes();
             }
 
-            if (settings.RequestContent != null &&
-                (settings.HttpVerb.Equals("POST", StringComparison.OrdinalIgnoreCase) ||
-                 settings.HttpVerb.Equals("PUT", StringComparison.OrdinalIgnoreCase) ||
-                 settings.HttpVerb.Equals("PATCH", StringComparison.OrdinalIgnoreCase))
-               )
+            if (settings.RequestContent != null)
             {
-                HttpContent content = null;
+                if (string.IsNullOrEmpty(settings.HttpVerb))
+                {
+                    settings.HttpVerb = "POST";
+                    settings.Request.Method = new HttpMethod(settings.HttpVerb);
+                }
 
+                HttpContent content = null;
 
                 if (settings.RequestContent is string)
                 {

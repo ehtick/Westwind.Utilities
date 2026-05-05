@@ -87,6 +87,8 @@ namespace Westwind.Utilities
                             {
                                 content = await settings.Response.Content.ReadAsStringAsync();
                             }
+                            if (settings.CaptureRequestAndResponse)
+                                settings.CapturedResponseContent = content;
                         }
 
                         return content;
@@ -95,6 +97,15 @@ namespace Westwind.Utilities
                     settings.HasErrors = true;
                     settings.ErrorMessage = ((int)settings.Response.StatusCode).ToString() + " " +
                                             settings.Response.StatusCode.ToString();
+
+                    if (settings.CaptureRequestAndResponse && settings.Response.Content != null)
+                    {
+                        using (var stream = await settings.Response.Content.ReadAsStreamAsync())
+                        {
+                            using var sr = new StreamReader(stream, true);
+                            settings.CapturedResponseContent = await sr.ReadToEndAsync();
+                        }
+                    }
 
                     if (settings.ThrowExceptions)
                         throw new HttpRequestException(settings.ErrorMessage);
@@ -218,6 +229,9 @@ namespace Westwind.Utilities
                                     content = sr.ReadToEnd();
                                 }
                             }
+
+                            if (settings.CaptureRequestAndResponse)
+                                settings.CapturedResponseContent = content;
                         }
 
                         return content;
@@ -226,6 +240,16 @@ namespace Westwind.Utilities
                     settings.HasErrors = true;
                     settings.ErrorMessage = ((int)settings.Response.StatusCode).ToString() + " " +
                                             settings.Response.StatusCode.ToString();
+
+
+                    if (settings.CaptureRequestAndResponse && settings.Response.Content != null)
+                    {
+                        using (var stream = settings.Response.Content.ReadAsStream())
+                        {
+                            var sr = new StreamReader(stream, true);
+                            settings.CapturedResponseContent = sr.ReadToEnd();
+                        }
+                    }
 
                     if (settings.ThrowExceptions)
                         throw new HttpRequestException(settings.ErrorMessage);
@@ -1302,6 +1326,9 @@ public static TResult DownloadJson<TResult>(string url, string verb = "GET", obj
                     {
                         var jsonString = JsonSerializationUtils.Serialize(settings.RequestContent);
                         content = new StringContent(jsonString, settings.Encoding, settings.RequestContentType);
+                        
+                        if (settings.CaptureRequestAndResponse)
+                           settings.CapturedRequestContent = jsonString;
                     }
                     else
                         content = new StringContent(settings.RequestContent as string, settings.Encoding,
@@ -1312,6 +1339,9 @@ public static TResult DownloadJson<TResult>(string url, string verb = "GET", obj
                     content = new ByteArrayContent(settings.RequestContent as byte[]);
                     settings.Request.Content = content;
                     settings.Request.Content?.Headers.Add("Content-Type", settings.RequestContentType);
+
+                    if (settings.CaptureRequestAndResponse)
+                        settings.CapturedRequestContent = "byte data - " + (settings.RequestContent as Byte[])?.Length ?? "0";
                 }
                 else
                 {
@@ -1319,6 +1349,9 @@ public static TResult DownloadJson<TResult>(string url, string verb = "GET", obj
                     {
                         var jsonString = JsonSerializationUtils.Serialize(settings.RequestContent);
                         content = new StringContent(jsonString, settings.Encoding, settings.RequestContentType);
+
+                        if (settings.CaptureRequestAndResponse)
+                            settings.CapturedRequestContent = jsonString;
                     }
                 }
 
@@ -1573,6 +1606,11 @@ public static TResult DownloadJson<TResult>(string url, string verb = "GET", obj
         /// of posting data to the server. Support UrlEncoded, Multi-Part, XML and Raw modes.
         /// </summary>
         public HttpFormPostMode RequestFormPostMode { get; set; } = HttpFormPostMode.UrlEncoded;
+
+        /// <summary>
+        /// Determines whether request and response data is captured
+        /// </summary>
+        public bool CaptureRequestAndResponse { get; set; }
 
         // member properties
         //string cPostBuffer = string.Empty;

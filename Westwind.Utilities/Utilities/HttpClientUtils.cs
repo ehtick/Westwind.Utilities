@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace Westwind.Utilities
 {
+
     /// <summary>
     /// Http Client wrapper that provides single line access for common Http requests
     /// that return string, Json or binary content. 
@@ -72,15 +73,15 @@ namespace Westwind.Utilities
                     {
                         // http 201 no content may return null and be success
 
-                        if (settings.HasResponseContent)
+                        if (settings.Response.Content != null)
                         {
                             if (settings.MaxResponseSize > 0)
                             {
                                 using (var stream = await settings.Response.Content.ReadAsStreamAsync())
                                 {
                                     var buffer = new byte[settings.MaxResponseSize];
-                                    _ = await stream.ReadAsync(buffer, 0, settings.MaxResponseSize);
-                                    content = settings.Encoding.GetString(buffer);
+                                    var bytesRead = await stream.ReadAsync(buffer, 0, settings.MaxResponseSize);
+                                    content = settings.Encoding.GetString(buffer, 0, bytesRead);
                                 }
                             }
                             else
@@ -98,12 +99,15 @@ namespace Westwind.Utilities
                     settings.ErrorMessage = ((int)settings.Response.StatusCode).ToString() + " " +
                                             settings.Response.StatusCode.ToString();
 
-                    if (settings.CaptureRequestAndResponse && settings.Response.Content != null)
+                    if (settings.Response.Content != null && settings.Response?.Content?.Headers?.ContentType?.MediaType?.StartsWith("text/") == true)
                     {
-                        using (var stream = await settings.Response.Content.ReadAsStreamAsync())
+                        try
                         {
-                            using var sr = new StreamReader(stream, true);
-                            settings.CapturedResponseContent = await sr.ReadToEndAsync();
+                            settings.CapturedResponseContent = await settings.Response.Content.ReadAsStringAsync();
+                        }
+                        catch
+                        {
+                            // ignore response content capture failures
                         }
                     }
 
@@ -209,15 +213,15 @@ namespace Westwind.Utilities
                     {
                         // http 201 no content may return null and be success
 
-                        if (settings.HasResponseContent)
+                        if (settings.Response.Content != null)
                         {
                             if (settings.MaxResponseSize > 0)
                             {
                                 using (var stream = settings.Response.Content.ReadAsStream())
                                 {
                                     var buffer = new byte[settings.MaxResponseSize];
-                                    _ = stream.ReadAsync(buffer, 0, settings.MaxResponseSize);
-                                    content = settings.Encoding.GetString(buffer);
+                                    var bytesRead = stream.Read(buffer, 0, settings.MaxResponseSize);
+                                    content = settings.Encoding.GetString(buffer, 0, bytesRead);
                                 }
                             }
                             else
@@ -242,12 +246,19 @@ namespace Westwind.Utilities
                                             settings.Response.StatusCode.ToString();
 
 
-                    if (settings.CaptureRequestAndResponse && settings.Response.Content != null)
+                    if (settings.Response.Content != null && settings.Response?.Content?.Headers?.ContentType?.MediaType?.StartsWith("text/") == true)
                     {
-                        using (var stream = settings.Response.Content.ReadAsStream())
+                        try
                         {
-                            var sr = new StreamReader(stream, true);
-                            settings.CapturedResponseContent = sr.ReadToEnd();
+                            using (var stream = settings.Response.Content.ReadAsStream())
+                            {
+                                using var sr = new StreamReader(stream, true);
+                                settings.CapturedResponseContent = sr.ReadToEnd();
+                            }
+                        }
+                        catch
+                        {
+                            // ignore response content capture failures
                         }
                     }
 
@@ -509,7 +520,7 @@ namespace Westwind.Utilities
                                 using (var outputStream = new FileStream(settings.OutputFilename, FileMode.OpenOrCreate,
                                            FileAccess.Write))
                                 {
-                                    using (var stream =settings.Response.Content.ReadAsStream())
+                                    using (var stream = settings.Response.Content.ReadAsStream())
                                     {
                                         stream.CopyTo(outputStream, 8 * 1024);
                                     }
@@ -606,7 +617,7 @@ namespace Westwind.Utilities
             if (string.IsNullOrEmpty(imageUrl) ||
                 !imageUrl.StartsWith("http://") && !imageUrl.StartsWith("https://"))
                 return null;
-           
+
             // if no filename is specified at all use a temp file
             if (string.IsNullOrEmpty(filename))
             {
@@ -666,7 +677,7 @@ namespace Westwind.Utilities
         /// </summary>
         /// <param name="settings">Must specify Url and optionally OutputFilename - see parametered version</param>
         /// <returns>file name that was created or null</returns>
-        public static async Task<string> DownloadImageToFileAsync( HttpClientRequestSettings settings = null) => await DownloadImageToFileAsync(null, null, settings);
+        public static async Task<string> DownloadImageToFileAsync(HttpClientRequestSettings settings = null) => await DownloadImageToFileAsync(null, null, settings);
 
 #if NET6_0_OR_GREATER
 
@@ -774,7 +785,7 @@ namespace Westwind.Utilities
 
 #endif
 
-#endregion
+        #endregion
 
 
         #region Byte Data Download
@@ -1059,7 +1070,7 @@ namespace Westwind.Utilities
         }
 #endif
 
-#endregion
+        #endregion
 
         #region Json
 
@@ -1070,106 +1081,106 @@ namespace Westwind.Utilities
         /// <param name="settings">Configuration for this request</param>
         /// <returns></returns>
         public static async Task<TResult> DownloadJsonAsync<TResult>(HttpClientRequestSettings settings)
-{
-    settings.RequestContentType = "application/json";
-    settings.Encoding = Encoding.UTF8;
+        {
+            settings.RequestContentType = "application/json";
+            settings.Encoding = Encoding.UTF8;
 
-    string json = await DownloadStringAsync(settings);
+            string json = await DownloadStringAsync(settings);
 
-    if (json == null)
-    {
-        return default;
-    }
+            if (json == null)
+            {
+                return default;
+            }
 
-    try
-    {
-        return JsonConvert.DeserializeObject<TResult>(json);
-    }
-    catch (Exception ex)
-    {
-        // original error has priority
-        if (settings.HasErrors)
+            try
+            {
+                return JsonConvert.DeserializeObject<TResult>(json);
+            }
+            catch (Exception ex)
+            {
+                // original error has priority
+                if (settings.HasErrors)
+                    return default;
+
+                settings.HasErrors = true;
+                settings.ErrorMessage = ex.GetBaseException().Message;
+                settings.ErrorException = ex;
+            }
+
             return default;
+        }
 
-        settings.HasErrors = true;
-        settings.ErrorMessage = ex.GetBaseException().Message;
-        settings.ErrorException = ex;
-    }
-
-    return default;
-}
-
-public static async Task<TResult> DownloadJsonAsync<TResult>(string url, string verb = "GET",
-    object data = null)
-{
-    return await DownloadJsonAsync<TResult>(new HttpClientRequestSettings
-    {
-        Url = url,
-        HttpVerb = verb,
-        RequestContent = data,
-        RequestContentType = data != null ? "application/json" : null
-    });
-}
+        public static async Task<TResult> DownloadJsonAsync<TResult>(string url, string verb = "GET",
+            object data = null)
+        {
+            return await DownloadJsonAsync<TResult>(new HttpClientRequestSettings
+            {
+                Url = url,
+                HttpVerb = verb,
+                RequestContent = data,
+                RequestContentType = data != null ? "application/json" : null
+            });
+        }
 
 #if NET6_0_OR_GREATER
 
-/// <summary>
-/// Makes a JSON request that returns a JSON result.
-/// </summary>
-/// <typeparam name="TResult">Result type to deserialize to</typeparam>
-/// <param name="settings">Configuration for this request</param>
-/// <returns>Result or null - check ErrorMessage in settings on failure</returns>
-public static TResult DownloadJson<TResult>(HttpClientRequestSettings settings)
-{
-    settings.RequestContentType = "application/json";
-    settings.Encoding = Encoding.UTF8;
+        /// <summary>
+        /// Makes a JSON request that returns a JSON result.
+        /// </summary>
+        /// <typeparam name="TResult">Result type to deserialize to</typeparam>
+        /// <param name="settings">Configuration for this request</param>
+        /// <returns>Result or null - check ErrorMessage in settings on failure</returns>
+        public static TResult DownloadJson<TResult>(HttpClientRequestSettings settings)
+        {
+            settings.RequestContentType = "application/json";
+            settings.Encoding = Encoding.UTF8;
 
-    string json = DownloadString(settings);
+            string json = DownloadString(settings);
 
-    if (json == null)
-    {
-        return default;
-    }
+            if (json == null)
+            {
+                return default;
+            }
 
-    try
-    {
-        return JsonConvert.DeserializeObject<TResult>(json);
-    }
-    catch (Exception ex)
-    {
-        // original error has priority
-        if (settings.HasErrors)
+            try
+            {
+                return JsonConvert.DeserializeObject<TResult>(json);
+            }
+            catch (Exception ex)
+            {
+                // original error has priority
+                if (settings.HasErrors)
+                    return default;
+
+                settings.HasErrors = true;
+                settings.ErrorMessage = ex.GetBaseException().Message;
+                settings.ErrorException = ex;
+            }
+
             return default;
-
-        settings.HasErrors = true;
-        settings.ErrorMessage = ex.GetBaseException().Message;
-        settings.ErrorException = ex;
-    }
-
-    return default;
-}
+        }
 
 
-/// <summary>
-/// Makes a JSON request that returns a JSON result.
-/// </summary>
-/// <param name="url">Request URL</param>
-/// <param name="verb">Http Verb to use. Defaults to GET on no data or POST when data is passed.</param>
-/// <param name="data">Data to be serialized to JSON for sending</param>
-/// <returns>result or null</returns>
-public static TResult DownloadJson<TResult>(string url, string verb = "GET", object data = null)
-{
-    return DownloadJson<TResult>(new HttpClientRequestSettings
-    {
-        Url = url,
-        HttpVerb = verb,
-        RequestContent = data,
-        RequestContentType = data != null ? "application/json" : null
-    });
-}
+        /// <summary>
+        /// Makes a JSON request that returns a JSON result.
+        /// </summary>
+        /// <param name="url">Request URL</param>
+        /// <param name="verb">Http Verb to use. Defaults to GET on no data or POST when data is passed.</param>
+        /// <param name="data">Data to be serialized to JSON for sending</param>
+        /// <returns>result or null</returns>
+        public static TResult DownloadJson<TResult>(string url, string verb = "GET", object data = null)
+        {
+            return DownloadJson<TResult>(new HttpClientRequestSettings
+            {
+                Url = url,
+                HttpVerb = verb,
+                RequestContent = data,
+                RequestContentType = data != null ? "application/json" : null
+            });
+        }
 
 #endif
-#endregion
+        #endregion
 
         #region Http Response
         /// <summary>
@@ -1326,9 +1337,9 @@ public static TResult DownloadJson<TResult>(string url, string verb = "GET", obj
                     {
                         var jsonString = JsonSerializationUtils.Serialize(settings.RequestContent);
                         content = new StringContent(jsonString, settings.Encoding, settings.RequestContentType);
-                        
+
                         if (settings.CaptureRequestAndResponse)
-                           settings.CapturedRequestContent = jsonString;
+                            settings.CapturedRequestContent = jsonString;
                     }
                     else
                         content = new StringContent(settings.RequestContent as string, settings.Encoding,

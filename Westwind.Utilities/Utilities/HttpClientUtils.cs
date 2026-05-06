@@ -1911,6 +1911,40 @@ namespace Westwind.Utilities
             }
         }
 
+
+        /// <summary>
+        /// Helper method that creates a proxy instance to store on the Proxy property
+        /// </summary>
+        /// <param name="proxyAddress">
+        /// Proxy Address to create or "default" for Windows default proxy.
+        /// Null or empty means no proxy is set
+        /// </param>
+        /// <param name="byPassonLocal">
+        /// Optional - bypass on local if you're specifying an explicit url
+        /// </param>
+        /// <param name="bypassList">
+        /// Optional list of root domain Urls that are bypassed
+        /// </param>
+        /// <returns></returns>
+        public static IWebProxy CreateWebProxy(string proxyAddress = null, bool bypassonLocal = false, string[] bypassList = null)
+        {
+            IWebProxy proxy = null;
+
+            if (string.IsNullOrEmpty(proxyAddress))
+                return null;
+
+            if (proxyAddress.Equals("default", StringComparison.OrdinalIgnoreCase))
+            {
+                proxy = WebRequest.GetSystemWebProxy();
+            }
+            else
+            {
+                proxy = new WebProxy(proxyAddress, bypassonLocal, bypassList);
+            }
+
+            return proxy;
+        }
+
         public override string ToString()
         {
             return $"{HttpVerb} {Url}   {ErrorMessage}";

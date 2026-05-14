@@ -735,7 +735,7 @@ namespace Westwind.Utilities
         /// illegal characters
         /// </summary>
         /// <param name="fileName">Filename to fix up</param>
-        /// <param name="replacementString">String value to replace illegal chars with. Defaults empty string</param>
+        /// <param name="replacementString">String value to replace illegal chars with. Defaults empty string - they are removed</param>
         /// <param name="spaceReplacement">Optional - replace spaces with a specified string like a - or _. Optional, if not set leaves spaces which are legal for filenames</param>
         /// <returns>Fixed up string</returns>
         public static string SafeFilename(string fileName, string replacementString = "", string spaceReplacement = null)

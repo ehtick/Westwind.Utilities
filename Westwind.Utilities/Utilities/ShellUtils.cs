@@ -1,4 +1,4 @@
-﻿#pragma warning disable SYSLIB0014
+#pragma warning disable SYSLIB0014
 
 #region 
 /*
@@ -329,7 +329,7 @@ namespace Westwind.Utilities
                 // hack because of this: https://github.com/dotnet/corefx/issues/10361
                 if (isWindows)
                 {
-                    url = url.Replace("&", "^&");
+                    url = url?.Replace("&", "^&") ?? string.Empty;
                     try
                     {
                         Process.Start(new ProcessStartInfo("cmd.exe", $"/c start {url}") {CreateNoWindow = true});

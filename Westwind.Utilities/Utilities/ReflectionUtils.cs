@@ -2,7 +2,7 @@
 /*
  **************************************************************
  *  Author: Rick Strahl 
- *          © West Wind Technologies, 2008 - 2009
+ *          Â© West Wind Technologies, 2008 - 2009
  *          http://www.west-wind.com/
  * 
  * Created: 09/08/2008
@@ -93,8 +93,7 @@ namespace Westwind.Utilities
         /// <param name="args"></param>
         /// <returns></returns>
         public static object CreateInstanceFromString(string typeName, params object[] args)
-        {
-            object instance = null;
+        {            
 
             try
             {
@@ -102,18 +101,14 @@ namespace Westwind.Utilities
                 if (type == null)
                     return null;
 
-                instance = Activator.CreateInstance(type, args);
+                return Activator.CreateInstance(type, args);
             }
             catch
             {
                 return null;
-            }
-
-            return instance;
+            }         
         }
 
-
-      
 
         /// <summary>
         /// Helper routine that looks up a type name and tries to retrieve the

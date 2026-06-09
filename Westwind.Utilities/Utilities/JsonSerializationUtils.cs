@@ -2,7 +2,7 @@
 /*
  **************************************************************
  *  Author: Rick Strahl 
- *          © West Wind Technologies, 2008 - 2009
+ *          Â© West Wind Technologies, 2008 - 2009
  *          http://www.west-wind.com/
  * 
  * Created: 09/08/2008
@@ -285,19 +285,29 @@ namespace Westwind.Utilities
         /// Dynamically creates an instance of JSON.NET
         /// </summary>
         /// <param name="throwExceptions">If true throws exceptions otherwise returns null</param>
+        /// <param name="camelCase">If true uses camel case property names</param>
         /// <returns>Dynamic JsonSerializer instance</returns>
         public static JsonSerializer CreateJsonNet(bool throwExceptions = true, bool camelCase = false)
         {
+
             if (JsonNet != null)
-                return JsonNet;
+            {         
+                var isCamelCaseResolverSet = JsonNet.ContractResolver is CamelCasePropertyNamesContractResolver;
+                if (camelCase == isCamelCaseResolverSet)
+                        return JsonNet;
+            }
 
             lock (SyncLock)
             {
                 if (JsonNet != null)
-                    return JsonNet;
+                {
+                    var isCamelCaseResolverSet = JsonNet.ContractResolver is CamelCasePropertyNamesContractResolver;
+                    if (camelCase == isCamelCaseResolverSet)
+                        return JsonNet;
+                }
 
-				// Try to create instance
-				JsonSerializer json;
+                // Try to create instance
+                JsonSerializer json;
                 try
                 {
 					json = new JsonSerializer();

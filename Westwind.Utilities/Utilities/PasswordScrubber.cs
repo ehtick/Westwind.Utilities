@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -36,7 +36,7 @@ namespace Westwind.Utilities
 
         public string ScrubJsonValues(string configString, params string[] jsonKeys)
         {
-            if (jsonKeys == null || jsonKeys.Length < 1) jsonKeys = new string[1] { "password" };
+            if (jsonKeys == null || jsonKeys.Length < 1) jsonKeys = new string[] { "password", "apikey", "token" };
 
             foreach (var token in jsonKeys)
             {

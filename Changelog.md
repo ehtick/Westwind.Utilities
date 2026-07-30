@@ -19,6 +19,9 @@ Download content directly to file from an Http Server.
 * **Additional HttpClientUtils Settings Object Response Properties**  
 Provided several helper properties to facilitate common header access. Explicitly exposed new Response properties: `ResponseContentType`, `ResponseContentLength`,  `ResponseContentHeaders` and `ResponseHeaders`.
 
+* **Re-introduced LogManager for backwards compatibility**  
+Re-introduced a refactored version of the LogManager which is a very simple logging implementation. Reintroduced due to the fact that some applications still use it and it was removed in 5.
+
 
 ### 5.2
 

@@ -6,6 +6,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using Westwind.Utilities.Data;
 
 namespace Westwind.Utilities.Logging
@@ -146,6 +147,68 @@ namespace Westwind.Utilities.Logging
         }
 
 
+
+        /// <summary>
+        /// Writes a new Web specific entry into the log file
+        /// 
+        /// Assumes that your log file is set up to be a Web Log file
+        /// </summary>
+        /// <param name=entry"></param>
+        /// <returns></returns>
+        /// <exception cref="System.InvalidOperationException">Thrown if the insert operation fails</exception>
+        public async Task<bool> WriteEntryAsync(T entry)
+        {
+            using SqlDataAccess data = CreateDal();
+            var parms = new List<DbParameter>();
+
+            parms.Add(data.CreateParameter("@Id", entry.Id));
+            parms.Add(data.CreateParameter("@Entered", entry.Entered, DbType.DateTime));
+            parms.Add(data.CreateParameter("@Message", StringUtils.Truncate(entry.Message, 255), 255));
+            parms.Add(data.CreateParameter("@ErrorLevel", entry.ErrorLevel));
+            parms.Add(data.CreateParameter("@Details", StringUtils.Truncate(entry.Details, 4000), 4000));
+            parms.Add(data.CreateParameter("@ErrorType", entry.ErrorType));
+            parms.Add(data.CreateParameter("@StackTrace", StringUtils.Truncate(entry.StackTrace, 1500), 1500));
+            string fieldList = "Id, Entered,Message,ErrorLevel,Details,ErrorType,StackTrace";
+            string parmList = "@Id, @Entered,@Message,@ErrorLevel,@Details,@ErrorType,@StackTrace";
+
+
+            if (entry.Web != null)
+            {
+                parms.Add(data.CreateParameter("@IpAddress", entry.Web.IpAddress));
+                parms.Add(data.CreateParameter("@UserAgent", StringUtils.Truncate(entry.Web.UserAgent, 255)));
+                parms.Add(data.CreateParameter("@Url", entry.Web.Url));
+                parms.Add(data.CreateParameter("@QueryString", StringUtils.Truncate(entry.Web.QueryString, 255)));
+                parms.Add(data.CreateParameter("@Referrer", entry.Web.Referrer));
+                parms.Add(data.CreateParameter("@PostData", StringUtils.Truncate(entry.Web.PostData, 2048), 2048));
+                parms.Add(data.CreateParameter("@RequestDuration", entry.Web.RequestDuration));
+
+                fieldList += ",IpAddress,UserAgent,Url,QueryString,Referrer,PostData,RequestDuration";
+                parmList += ",@IpAddress,@UserAgent,@Url,@QueryString,@Referrer,@PostData,@RequestDuration";
+            }
+
+            string sql = $"""
+                insert into   [{Filename}] ({fieldList}) 
+                       values ({parmList})
+                """;
+
+            Console.WriteLine(sql);
+
+            int result = await data.ExecuteNonQueryAsync(sql, parms.ToArray()).ConfigureAwait(false);
+
+
+            // check for table missing and retry
+            if (data.ErrorNumber == 208)
+            {
+                // if the table could be created try again
+                if (CreateLog())
+                    return await WriteEntryAsync(entry).ConfigureAwait(false);
+            }
+
+            if (result == -1)
+                throw new InvalidOperationException("Unable add log entry into table " + Filename + ". " + data.ErrorMessage);
+
+            return true;
+        }
 
         /// <summary>
         /// Returns an individual Web log entry from the log table

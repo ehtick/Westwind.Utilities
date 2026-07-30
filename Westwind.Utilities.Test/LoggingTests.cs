@@ -1,8 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Threading.Tasks;
 using Westwind.Utilities.Logging;
 
 namespace Westwind.Utilities.Test;
@@ -110,6 +108,23 @@ public class LoggingTests
         Assert.IsTrue(result, "Log was not created successfully.");
     }
 
+    [TestMethod]
+    public async Task WriteSqlLogTestAsync()
+    {
+        var adapter = new SqlLogAdapter()
+        {
+            Tablename = "ApplicationLog",
+            ConnectionString = TestConfigurationSettings.WestwindToolkitConnectionString ?? "Data Source=.;Initial Catalog=WestwindToolkitSamples;Integrated Security=True"
+        };
+        var manager = LogManager.Create(adapter);
+        bool result = await manager.LogInfoAsync("Info Message Async Posted");
+
+        Assert.IsTrue(result, "Info Log entry was not created successfully.");
+        result = await manager.LogWarningAsync("Warning Message Async Posted");
+        Assert.IsTrue(result, "Warning Log entry was not created successfully.");
+        result = await manager.LogErrorAsync("Error Message Async Posted");
+        Assert.IsTrue(result, "Error Log entry was not created successfully.");
+    }
 
 
     [TestMethod]

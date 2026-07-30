@@ -33,6 +33,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 
 namespace Westwind.Utilities.Logging
@@ -194,11 +195,34 @@ namespace Westwind.Utilities.Logging
         /// Writes a Web specific log entry into the log
         /// </summary>
         /// <param name="entry"></param>
+        /// <returns></returns>        
+        public Task<bool> WriteEntryAsync(T entry)
+        {
+            return LogAdapter.WriteEntryAsync(entry);
+        }
+
+
+
+        /// <summary>
+        /// Writes a Web specific log entry into the log
+        /// </summary>
+        /// <param name="entry"></param>
         /// <returns></returns>
         public bool Log(T entry)
         {
             return LogAdapter.WriteEntry(entry);            
         }
+
+        /// <summary>
+        /// Writes a Web specific log entry into the log
+        /// </summary>
+        /// <param name="entry"></param>
+        /// <returns></returns>
+        public Task<bool> LogAsync(T entry)
+        {
+            return LogAdapter.WriteEntryAsync(entry);
+        }
+
 
         /// <summary>
         /// Writes an Info entry into the log
@@ -220,6 +244,28 @@ namespace Westwind.Utilities.Logging
             };
 
             return Log(entry);
+        }
+
+        /// <summary>
+        /// Writes an Info entry into the log
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="?"></param>
+        /// <returns></returns>
+        public Task<bool> LogInfoAsync(string message,
+            string details = null,
+            string stackTrace = null)
+
+        {
+            var entry = new T()
+            {
+                ErrorLevel = ErrorLevels.Info,
+                Message = message,
+                Details = details,
+                StackTrace = stackTrace
+            };
+
+            return LogAsync(entry);
         }
 
 
@@ -246,6 +292,29 @@ namespace Westwind.Utilities.Logging
 
 
         /// <summary>
+        /// Writes an Error message entry to the log
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="details"></param>
+        /// <param name="stackTrace"></param>
+        /// <returns></returns>
+        public Task<bool> LogErrorAsync(string message,
+            string details = null,
+            string stackTrace = null)
+        {
+            var entry = new T()
+            {
+                ErrorLevel = ErrorLevels.Error,
+                Message = message,
+                Details = details,
+                StackTrace = stackTrace
+            };
+            return LogAsync(entry);
+        }
+
+
+
+        /// <summary>
         /// Writes an error entry from an exception to the log
         /// </summary>
         /// <param name="ex"></param>
@@ -257,6 +326,22 @@ namespace Westwind.Utilities.Logging
 
             return Log(entry);
         }
+
+        /// <summary>
+        /// Writes an error entry from an exception to the log
+        /// </summary>
+        /// <param name="ex"></param>
+        /// <returns></returns>
+        public Task<bool> LogErrorAsync(Exception ex)
+        {
+            var entry = new T();
+            entry.UpdateFromException(ex);
+
+            return LogAsync(entry);
+        }
+
+
+
 
         /// <summary>
         /// Writes a warning message to the log
@@ -277,7 +362,28 @@ namespace Westwind.Utilities.Logging
                 StackTrace = stackTrace
             };
             return Log(entry);
-        } 
+        }
+
+        /// <summary>
+        /// Writes a warning message to the log
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="details"></param>
+        /// <param name="stackTrace"></param>
+        /// <returns></returns>
+        public Task<bool> LogWarningAsync(string message,
+            string details = null,
+            string stackTrace = null)
+        {
+            var entry = new T()
+            {
+                ErrorLevel = ErrorLevels.Warning,
+                Message = message,
+                Details = details,
+                StackTrace = stackTrace
+            };
+            return LogAsync(entry);
+        }
 
 
         /// <summary>

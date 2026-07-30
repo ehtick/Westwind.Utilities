@@ -1,4 +1,4 @@
-﻿#region License
+#region License
 //#define SupportWebRequestProvider
 /*
  **************************************************************
@@ -786,16 +786,39 @@ namespace Westwind.Utilities.Data
 
             return Result;
         }
+
         /// <summary>
         /// Executes a Sql command and returns a single value from it.
         /// </summary>
-        /// <param name="Sql">Sql string to execute</param>
+        /// <param name="sql"></param>
         /// <param name="parameters">
-        /// DbParameters (CreateParameter()) for named parameters
-        /// or use @0,@1 parms in SQL and plain values
+        ///     DbParameters (CreateParameter()) for named parameters
+        ///     or use @0,@1 parms in SQL and plain values
         /// </param>
+        /// <param name="Sql">Sql string to execute</param>
         /// <returns>Result value or null. Check ErrorMessage on Null if unexpected</returns>
         public virtual object ExecuteScalar(string sql, params object[] parameters)
+        {
+            SetError();
+
+            DbCommand command = CreateCommand(sql, parameters);
+            if (command == null)
+                return null;
+
+            return ExecuteScalar(command, null);
+        }
+
+        /// <summary>
+        /// Executes a Sql command and returns a single value from it.
+        /// </summary>
+        /// <param name="sql"></param>
+        /// <param name="parameters">
+        ///     DbParameters (CreateParameter()) for named parameters
+        ///     or use @0,@1 parms in SQL and plain values
+        /// </param>
+        /// <param name="Sql">Sql string to execute</param>
+        /// <returns>Result value or null. Check ErrorMessage on Null if unexpected</returns>
+        public virtual object ExecuteScalar(string sql, params DbParameter[] parameters)
         {
             SetError();
 

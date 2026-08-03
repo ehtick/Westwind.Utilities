@@ -24,7 +24,7 @@ namespace Westwind.Utilities.Logging
         {
         }
     }
-
+    
     public class SqlLogAdapter<T> : ILogAdapter<T> where T : LogEntry, new()
     {
         public string ConnectionString { get; set; } = "";

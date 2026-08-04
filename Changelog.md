@@ -22,6 +22,8 @@ Provided several helper properties to facilitate common header access. Explicitl
 * **Re-introduced LogManager for backwards compatibility**  
 Re-introduced a refactored version of the LogManager which is a very simple logging implementation. Reintroduced due to the fact that some applications still use it and it was removed in 5.
 
+* **ConsoleUtils**  
+A small helper class of helper methods to make it easier to write colored console and formatted line output using the Console.
 
 ### 5.2
 
